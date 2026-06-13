@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ルーティン記録</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:#e0e0e0;--border2:#ccc;
+  --green-bg:#e8f5e9;--green-text:#2e7d32;--green-border:#a5d6a7;
+  --amber-bg:#fff8e1;--amber-text:#e65100;--amber-border:#ffcc80;
+  --blue-bg:#e3f2fd;--blue-text:#1565c0;--blue-border:#90caf9;
+  --purple-bg:#f3e5f5;--purple-text:#6a1b9a;--purple-border:#ce93d8;
+  --red-bg:#ffebee;--red-text:#b71c1c;--red-border:#ef9a9a;
+  --radius:10px;--radius-sm:6px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:#3a3a3c;--border2:#48484a;
+    --green-bg:#1b3a1e;--green-text:#81c784;--green-border:#2e7d32;
+    --amber-bg:#3a2800;--amber-text:#ffb74d;--amber-border:#e65100;
+    --blue-bg:#0d2137;--blue-text:#90caf9;--blue-border:#1565c0;
+    --purple-bg:#2a1040;--purple-text:#ce93d8;--purple-border:#6a1b9a;
+    --red-bg:#3b0f0f;--red-text:#ef9a9a;--red-border:#b71c1c;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+.header{padding:20px 16px 0;max-width:540px;margin:0 auto}
+.header h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.header .date{font-size:13px;color:var(--text2);margin-top:3px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);max-width:540px;margin:16px auto 0;padding:0 16px}
+.tab{flex:1;padding:10px 0;font-size:14px;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;font-weight:500}
+.tab.active{color:var(--text);border-bottom-color:var(--text)}
+.body{max-width:540px;margin:0 auto;padding:16px}
+.section{display:none}.section.active{display:block}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.card{background:var(--bg2);border-radius:var(--radius);padding:12px;text-align:center}
+.card-label{font-size:11px;color:var(--text2);margin-bottom:4px}
+.card-value{font-size:21px;font-weight:600;color:var(--text);line-height:1}
+.card-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.prog-wrap{height:5px;background:var(--bg3);border-radius:3px;margin-bottom:16px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;background:var(--green-text);transition:width .4s}
+.today-lbl{font-size:13px;color:var(--text2);margin-bottom:10px}
+.bonus-banners{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.bonus-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--amber-border);background:var(--amber-bg)}
+.bonus-banner-text{font-size:13px;color:var(--amber-text);flex:1}
+.bonus-banner-pts{font-size:13px;font-weight:600;color:var(--amber-text)}
+.routine-list{display:flex;flex-direction:column;gap:10px}
+.r-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:background .15s,border-color .15s}
+.r-card:active{background:var(--bg2)}
+.r-card.done{border-color:var(--green-border);background:var(--green-bg)}
+.r-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--border)}
+.r-info{flex:1;min-width:0}
+.r-name{font-size:15px;font-weight:500;color:var(--text)}
+.r-card.done .r-name{color:var(--green-text)}
+.r-meta{font-size:12px;color:var(--text2);margin-top:3px}
+.r-card.done .r-meta{color:var(--green-text)}
+.streak-pill{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:500;padding:1px 7px;border-radius:99px;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);margin-left:6px;vertical-align:middle}
+.check{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;color:var(--text3)}
+.r-card.done .check{border-color:var(--green-border);background:var(--green-bg);color:var(--green-text)}
+/* history */
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.month-nav-title{font-size:16px;font-weight:600}
+.nav-btn{padding:6px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text2);cursor:pointer;font-size:13px}
+.nav-btn:active{background:var(--bg2)}
+.month-summary-box{border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;border:1px solid var(--border)}
+.month-summary-box.unpaid{border-color:var(--blue-border);background:var(--blue-bg)}
+.month-summary-box.paid{border-color:var(--green-border);background:var(--green-bg)}
+.msb-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.msb-row:last-child{margin-bottom:0}
+.msb-label{font-size:13px;color:var(--text2)}
+.msb-value{font-size:15px;font-weight:600}
+.pay-btn{width:100%;padding:11px;border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;font-weight:600;margin-top:10px}
+.pay-btn.do-pay{background:var(--green-text);color:#fff}
+.pay-btn.do-pay:active{opacity:.85}
+.pay-btn.undo-pay{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.pay-btn.undo-pay:active{background:var(--bg2)}
+.paid-stamp{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green-border);border-radius:99px;padding:2px 10px}
+/* payment history */
+.pay-history{margin-bottom:16px}
+.pay-history-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.pay-record{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid var(--green-border);border-radius:var(--radius-sm);margin-bottom:6px}
+.pay-record-left{display:flex;flex-direction:column;gap:2px}
+.pay-record-month{font-size:14px;font-weight:500;color:var(--text)}
+.pay-record-date{font-size:12px;color:var(--text2)}
+.pay-record-right{display:flex;align-items:center;gap:8px}
+.pay-amount{font-size:15px;font-weight:600;color:var(--green-text)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px}
+.cal-hd{font-size:11px;color:var(--text3);text-align:center;padding:3px 0}
+.cal-cell{border-radius:6px;padding:5px 2px;text-align:center;min-height:48px;border:1px solid var(--border);background:var(--bg)}
+.cal-cell.empty{border:none;background:none}
+.cal-cell.today{border-color:var(--blue-border);border-width:1.5px}
+.cal-num{font-size:11px;color:var(--text2)}
+.cal-pts{font-size:10px;font-weight:600;color:var(--green-text)}
+.cal-dot{width:5px;height:5px;border-radius:50%;margin:2px auto 0}
+.cal-bonus{font-size:9px;text-align:center;line-height:1}
+.log-list{display:flex;flex-direction:column;gap:6px}
+.log-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.log-item.bonus{border-color:var(--amber-border);background:var(--amber-bg)}
+.log-left{display:flex;align-items:center;gap:8px}
+.log-name{font-size:14px;color:var(--text)}
+.log-item.bonus .log-name{color:var(--amber-text)}
+.log-date{font-size:12px;color:var(--text2)}
+.log-pts{font-size:13px;font-weight:600;color:var(--green-text)}
+.log-item.bonus .log-pts{color:var(--amber-text)}
+.empty-msg{font-size:13px;color:var(--text3);text-align:center;padding:24px 0}
+/* settings */
+.set-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.set-title{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)}
+.set-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.set-row:last-child{margin-bottom:0}
+input[type=text],input[type=number],select{font-size:13px;padding:7px 9px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none}
+input[type=text]:focus,input[type=number]:focus,select:focus{border-color:#888}
+.rm-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);background:none;cursor:pointer;color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.add-btn{width:100%;padding:8px;border:1px dashed var(--border2);border-radius:var(--radius-sm);background:none;cursor:pointer;font-size:13px;color:var(--text2);margin-top:4px}
+.add-btn:active{background:var(--bg2)}
+.salary-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);gap:8px}
+.salary-row:last-child{border-bottom:none}
+.bonus-rule-row{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.bonus-rule-row:last-child{border-bottom:none}
+.action-btn{width:100%;padding:11px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:8px}
+.action-btn:active{background:var(--bg2)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);border-radius:var(--radius-sm);padding:9px 18px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:999}
+.toast.show{opacity:1}
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--bg);border-radius:16px 16px 0 0;width:100%;max-width:540px;padding:24px 20px 36px}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:6px}
+.modal p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6}
+.modal-amount{font-size:28px;font-weight:700;color:var(--green-text);text-align:center;margin-bottom:20px}
+.modal-btns{display:flex;flex-direction:column;gap:10px}
+.modal-btn-confirm{padding:14px;border:none;border-radius:var(--radius-sm);background:var(--green-text);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.modal-btn-cancel{padding:12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text2);font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📋 ルーティン記録</h1>
+  <div class="date" id="hdr-date"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('today')">今日</button>
+  <button class="tab" onclick="switchTab('history')">履歴</button>
+  <button class="tab" onclick="switchTab('payment')">お小遣い</button>
+  <button class="tab" onclick="switchTab('settings')">設定</button>
+</div>
+
+<div class="body">
+
+  <!-- TODAY -->
+  <div id="tab-today" class="section active">
+    <div class="summary">
+      <div class="card"><div class="card-label">今月の合計</div><div class="card-value" id="s-month-pts">0</div><div class="card-sub">ポイント</div></div>
+      <div class="card"><div class="card-label">お小遣い見込み</div><div class="card-value" id="s-allowance">¥0</div><div class="card-sub"> </div></div>
+      <div class="card"><div class="card-label">今日</div><div class="card-value" id="s-today-pts">0</div><div class="card-sub">ポイント</div></div>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+    <div class="today-lbl" id="today-lbl"></div>
+    <div id="bonus-banners" class="bonus-banners"></div>
+    <div class="routine-list" id="routine-list"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="section">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="prevMonth()">&#8249;</button>
+      <span class="month-nav-title" id="hist-title"></span>
+      <button class="nav-btn" onclick="nextMonth()">&#8250;</button>
+    </div>
+    <div id="hist-month-box"></div>
+    <div class="cal" id="cal"></div>
+    <div class="log-list" id="log-list"></div>
+  </div>
+
+  <!-- PAYMENT -->
+  <div id="tab-payment" class="section">
+    <div style="font-size:15px;font-weight:600;margin-bottom:14px">💰 お小遣い支払い管理</div>
+    <div id="pay-pending"></div>
+    <div id="pay-history-wrap"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="section">
+    <div class="set-card">
+      <div class="set-title">ルーティン項目</div>
+      <div id="set-routines"></div>
+      <button class="add-btn" onclick="addRoutine()">＋ 項目を追加</button>
+    </div>
+    <div class="set-card">
+      <div class="set-title">🔥 連続ボーナス設定</div>
+      <div id="set-bonus"></div>
+      <button class="add-btn" onclick="addBonusRule()">＋ ボーナスルールを追加</button>
+    </div>
+    <div class="set-card">
+      <div class="set-title">お小遣いの換算表</div>
+      <div id="set-salary"></div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center">
+        <input type="number" id="nf" placeholder="下限pt" style="width:70px">
+        <span style="font-size:13px;color:var(--text2)">〜</span>
+        <input type="number" id="nt" placeholder="上限pt" style="width:70px">
+        <input type="number" id="na" placeholder="金額(円)" style="width:90px">
+        <button class="nav-btn" onclick="addTier()">追加</button>
+      </div>
+    </div>
+    <div class="set-card">
+      <div class="set-title">📅 過去の記録を手入力</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">日付を選んで、その日にやった項目をチェックしてください。すでに記録がある日はチェック済みで表示されます。</p>
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">日付</label>
+        <input type="date" id="manual-date" style="width:100%" onchange="renderManualEntry()">
+      </div>
+      <div id="manual-entry-list"></div>
+    </div>
+    <button class="action-btn" onclick="exportData()">📤 データをエクスポート（バックアップ）</button>
+    <button class="action-btn" onclick="importData()">📥 データをインポート</button>
+  </div>
+
+</div>
+
+<!-- 支払い確認モーダル -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <p id="modal-desc"></p>
+    <div class="modal-amount" id="modal-amount"></div>
+    <div class="modal-btns">
+      <button class="modal-btn-confirm" id="modal-confirm">✓ 払ったことにする</button>
+      <button class="modal-btn-cancel" onclick="closeModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='routine-v4';
+const EMOJIS=['🧘','🗑️','📚','🦷','🏃','💧','🛏️','🍳','🐕','🌿'];
+const COLORS=['#9FE1CB','#FAC775','#F4C0D1','#B5D4F4','#C0DD97','#F5C4B3'];
+const DAYS=['日','月','火','水','木','金','土'];
+
+let S={
+  routines:[
+    {id:1,name:'ストレッチ',points:3,emoji:'🧘'},
+    {id:2,name:'ペットボトルゴミ片づけ',points:2,emoji:'🗑️'},
+    {id:3,name:'歯磨き',points:1,emoji:'🦷'},
+  ],
+  bonusRules:[{id:1,routineId:1,streakDays:10,bonusPoints:10}],
+  salaryTiers:[
+    {from:0,to:29,amount:0},
+    {from:30,to:59,amount:300},
+    {from:60,to:99,amount:600},
+    {from:100,to:999,amount:1000},
+  ],
+  logs:[],bonusLogs:[],
+  payments:[], // {id, monthStr, points, amount, paidAt}
+  nextId:4,nextBonusId:2
+};
+let histDate=new Date();
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem(KEY);if(d)S=JSON.parse(d);}catch(e){}}
+
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function dateOf(d){return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function monthOf(d){return d.getFullYear()+'-'+p(d.getMonth()+1);}
+function p(n){return String(n).padStart(2,'0');}
+function fmtMonth(ms){const[y,m]=ms.split('-');return y+'年'+parseInt(m)+'月';}
+function fmtDate(ds){const d=new Date(ds.replace(' ','T'));return (d.getMonth()+1)+'/'+d.getDate()+'（'+DAYS[d.getDay()]+'）';}
+
+function doneOn(rid,ds){return S.logs.some(l=>l.routineId===rid&&l.date===ds);}
+function doneToday(rid){return doneOn(rid,todayStr());}
+
+function streak(rid,upto){
+  let n=0,d=new Date(upto+'T00:00:00');
+  while(doneOn(rid,dateOf(d))){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function bonusGranted(rid,milestone){return S.bonusLogs.some(b=>b.routineId===rid&&b.milestone===milestone);}
+function evalBonuses(){
+  const today=todayStr();let added=[];
+  S.bonusRules.forEach(rule=>{
+    const s=streak(rule.routineId,today);if(!s)return;
+    const achieved=Math.floor(s/rule.streakDays);
+    for(let i=1;i<=achieved;i++){
+      const ms=i*rule.streakDays;
+      if(!bonusGranted(rule.routineId,ms)){
+        const r=S.routines.find(x=>x.id===rule.routineId);
+        S.bonusLogs.push({id:Date.now()+i,routineId:rule.routineId,milestone:ms,date:today,points:rule.bonusPoints,label:`${r?r.emoji:'🎉'} ${r?r.name:''} ${ms}日連続ボーナス`});
+        added.push({ms,points:rule.bonusPoints,name:r?r.name:''});
+      }
+    }
+  });
+  return added;
+}
+function revokeIfNeeded(rid){
+  S.bonusRules.filter(r=>r.routineId===rid).forEach(rule=>{
+    const s=streak(rid,todayStr());
+    const maxValid=Math.floor(s/rule.streakDays)*rule.streakDays;
+    S.bonusLogs=S.bonusLogs.filter(b=>b.routineId!==rid||b.milestone<=maxValid);
+  });
+}
+function monthPts(ms){
+  return S.logs.filter(l=>l.date.startsWith(ms)).reduce((a,l)=>a+l.points,0)
+        +S.bonusLogs.filter(b=>b.date.startsWith(ms)).reduce((a,b)=>a+b.points,0);
+}
+function todayPts(){
+  const t=todayStr();
+  return S.logs.filter(l=>l.date===t).reduce((a,l)=>a+l.points,0)
+        +S.bonusLogs.filter(b=>b.date===t).reduce((a,b)=>a+b.points,0);
+}
+function allowance(pts){const t=S.salaryTiers.find(t=>pts>=t.from&&pts<=t.to);return t?t.amount:0;}
+function isPaid(ms){return S.payments.some(p=>p.monthStr===ms);}
+
+// 過去月（今月より前）でポイントが1以上、かつ未払いの月リスト
+function unpaidMonths(){
+  const cur=monthOf(new Date());
+  const allMonths=new Set([
+    ...S.logs.map(l=>l.date.slice(0,7)),
+    ...S.bonusLogs.map(b=>b.date.slice(0,7))
+  ]);
+  return [...allMonths].filter(ms=>ms<cur&&!isPaid(ms)&&monthPts(ms)>0).sort();
+}
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// --- modal ---
+let _modalConfirmFn=null;
+function openPayModal(ms){
+  const pts=monthPts(ms),amt=allowance(pts);
+  document.getElementById('modal-title').textContent=fmtMonth(ms)+'のお小遣い';
+  document.getElementById('modal-desc').textContent=`${pts}ポイント獲得。換算額は下記の通りです。支払い済みにしますか？`;
+  document.getElementById('modal-amount').textContent='¥'+amt.toLocaleString();
+  _modalConfirmFn=()=>confirmPay(ms,pts,amt);
+  document.getElementById('modal-confirm').onclick=_modalConfirmFn;
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');}
+function confirmPay(ms,pts,amt){
+  S.payments.push({id:Date.now(),monthStr:ms,points:pts,amount:amt,paidAt:new Date().toISOString()});
+  save();closeModal();renderAll();
+  toast('💰 '+fmtMonth(ms)+' ¥'+amt.toLocaleString()+' を支払済みにしました');
+}
+function undoPay(ms){
+  S.payments=S.payments.filter(p=>p.monthStr!==ms);
+  save();renderAll();
+  toast(fmtMonth(ms)+' の支払いを取り消しました');
+}
+
+function toggle(id){
+  const r=S.routines.find(x=>x.id===id);if(!r)return;
+  const today=todayStr();
+  const idx=S.logs.findIndex(l=>l.routineId===id&&l.date===today);
+  if(idx>=0){
+    S.logs.splice(idx,1);revokeIfNeeded(id);
+    toast(`${r.emoji} ${r.name} を取り消しました`);
+  } else {
+    S.logs.push({id:Date.now(),routineId:id,date:today,points:r.points,name:r.name,emoji:r.emoji});
+    const added=evalBonuses();
+    if(added.length){setTimeout(()=>toast(`🎉 ${added[0].name} ${added[0].ms}日連続！ボーナス +${added[0].points}pt`),350);}
+    else{toast(`${r.emoji} ${r.name} +${r.points}pt`);}
+  }
+  save();renderAll();
+}
+
+// --- render ---
+function renderSummary(){
+  const ms=monthOf(new Date()),mp=monthPts(ms);
+  document.getElementById('s-month-pts').textContent=mp;
+  document.getElementById('s-allowance').textContent='¥'+allowance(mp).toLocaleString();
+  document.getElementById('s-today-pts').textContent=todayPts();
+  const d=new Date();
+  document.getElementById('today-lbl').textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+DAYS[d.getDay()]+'）';
+  document.getElementById('hdr-date').textContent=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+}
+
+function renderBonusBanners(){
+  const el=document.getElementById('bonus-banners');
+  const list=S.bonusLogs.filter(b=>b.date===todayStr());
+  el.innerHTML=list.map(b=>`<div class="bonus-banner"><span style="font-size:18px">🔥</span><span class="bonus-banner-text">${b.label}</span><span class="bonus-banner-pts">+${b.points}pt</span></div>`).join('');
+}
+
+function renderRoutines(){
+  const el=document.getElementById('routine-list');el.innerHTML='';
+  const total=S.routines.length,done=S.routines.filter(r=>doneToday(r.id)).length;
+  document.getElementById('prog').style.width=total?Math.round(done/total*100)+'%':'0%';
+  S.routines.forEach((r,i)=>{
+    const d=doneToday(r.id),s=streak(r.id,todayStr());
+    const rule=S.bonusRules.find(b=>b.routineId===r.id);
+    let spill='';
+    if(s>0&&rule){const next=(Math.floor(s/rule.streakDays)+1)*rule.streakDays,rem=next-s;spill=`<span class="streak-pill">🔥 ${s}日連続${rem<=3?' · あと'+rem+'日':''}</span>`;}
+    const div=document.createElement('div');div.className='r-card'+(d?' done':'');div.onclick=()=>toggle(r.id);
+    div.innerHTML=`<div class="r-icon" style="background:${COLORS[i%COLORS.length]}40">${r.emoji}</div>
+      <div class="r-info"><div class="r-name">${r.name}${spill}</div><div class="r-meta">⭐ ${r.points}pt${rule?' · 連続'+rule.streakDays+'日で+'+rule.bonusPoints+'pt':''}</div></div>
+      <div class="check">${d?'✓':'○'}</div>`;
+    el.appendChild(div);
+  });
+}
+
+function renderHistory(){
+  const ms=monthOf(histDate);
+  document.getElementById('hist-title').textContent=fmtMonth(ms);
+  const mp=monthPts(ms),paid=isPaid(ms);
+
+  // month summary box
+  const box=document.getElementById('hist-month-box');
+  box.innerHTML=`<div class="month-summary-box ${paid?'paid':'unpaid'}">
+    <div class="msb-row">
+      <span class="msb-label">合計ポイント</span>
+      <span class="msb-value">${mp} pt</span>
+    </div>
+    <div class="msb-row">
+      <span class="msb-label">お小遣い換算</span>
+      <span class="msb-value" style="color:var(--green-text)">¥${allowance(mp).toLocaleString()}</span>
+    </div>
+    <div class="msb-row">
+      <span class="msb-label">支払い状況</span>
+      ${paid
+        ? `<span class="paid-stamp">✓ 支払済み</span>`
+        : `<span style="font-size:13px;color:var(--text2)">未払い</span>`}
+    </div>
+    ${ms<monthOf(new Date())&&mp>0
+      ? paid
+        ? `<button class="pay-btn undo-pay" onclick="undoPay('${ms}')">支払い済みを取り消す</button>`
+        : `<button class="pay-btn do-pay" onclick="openPayModal('${ms}')">💰 支払済みにする</button>`
+      : ''}
+  </div>`;
+
+  // calendar
+  const cal=document.getElementById('cal');cal.innerHTML='';
+  DAYS.forEach(d=>{const h=document.createElement('div');h.className='cal-hd';h.textContent=d;cal.appendChild(h);});
+  const y=histDate.getFullYear(),m=histDate.getMonth();
+  const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  const today=todayStr();
+  const ptsArr=Array.from({length:days},(_,i)=>{
+    const ds=y+'-'+p(m+1)+'-'+p(i+1);
+    return S.logs.filter(l=>l.date===ds).reduce((a,l)=>a+l.points,0)
+          +S.bonusLogs.filter(b=>b.date===ds).reduce((a,b)=>a+b.points,0);
+  });
+  const max=Math.max(1,...ptsArr);
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cal-cell empty';cal.appendChild(e);}
+  for(let d=1;d<=days;d++){
+    const ds=y+'-'+p(m+1)+'-'+p(d);
+    const pts=ptsArr[d-1],hasBonus=S.bonusLogs.some(b=>b.date===ds);
+    const cell=document.createElement('div');cell.className='cal-cell'+(ds===today?' today':'');
+    const col=pts>0?`hsl(${160-Math.round(pts/max*60)},55%,${70-Math.round(pts/max*18)}%)`:'transparent';
+    cell.innerHTML=`<div class="cal-num">${d}</div>${pts>0?`<div class="cal-pts">${pts}</div><div class="cal-dot" style="background:${col}"></div>`:''}${hasBonus?`<div class="cal-bonus">🔥</div>`:''}`;
+    cal.appendChild(cell);
+  }
+
+  const all=[
+    ...S.logs.filter(l=>l.date.startsWith(ms)).map(l=>({...l,type:'n'})),
+    ...S.bonusLogs.filter(b=>b.date.startsWith(ms)).map(b=>({...b,type:'b',name:b.label,emoji:'🔥'}))
+  ].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const ll=document.getElementById('log-list');ll.innerHTML='';
+  if(!all.length){ll.innerHTML=`<div class="empty-msg">この月の記録はありません</div>`;return;}
+  all.forEach(l=>{
+    const item=document.createElement('div');item.className='log-item'+(l.type==='b'?' bonus':'');
+    const d=new Date(l.date+'T00:00:00');
+    const ds=(d.getMonth()+1)+'/'+d.getDate()+'（'+DAYS[d.getDay()]+'）';
+    item.innerHTML=`<div class="log-left"><span style="font-size:16px">${l.emoji||'✅'}</span><div><div class="log-name">${l.name}</div><div class="log-date">${ds}</div></div></div><span class="log-pts">+${l.points}pt</span>`;
+    ll.appendChild(item);
+  });
+}
+
+function renderPayment(){
+  // 未払い
+  const pending=unpaidMonths();
+  const pp=document.getElementById('pay-pending');
+  if(pending.length===0){
+    pp.innerHTML=`<div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:var(--radius-sm);padding:14px;text-align:center;margin-bottom:16px;font-size:14px;color:var(--green-text)">✓ 未払いのお小遣いはありません</div>`;
+  } else {
+    pp.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">未払い（${pending.length}件）</div>`
+      +pending.map(ms=>{
+        const pts=monthPts(ms),amt=allowance(pts);
+        return `<div style="background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:15px;font-weight:600">${fmtMonth(ms)}</span>
+            <span style="font-size:16px;font-weight:700;color:var(--green-text)">¥${amt.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${pts}ポイント獲得</div>
+          <button class="pay-btn do-pay" onclick="openPayModal('${ms}')">💰 払ったことにする</button>
+        </div>`;
+      }).join('');
+  }
+
+  // 支払い履歴
+  const ph=document.getElementById('pay-history-wrap');
+  const sorted=[...S.payments].sort((a,b)=>b.monthStr.localeCompare(a.monthStr));
+  if(sorted.length===0){ph.innerHTML='';return;}
+  ph.innerHTML=`<div class="pay-history-title" style="margin-top:8px">支払い履歴</div>`
+    +sorted.map(pay=>{
+      const d=new Date(pay.paidAt);
+      const dateStr=(d.getMonth()+1)+'/'+d.getDate()+' '+p(d.getHours())+':'+p(d.getMinutes())+'に記録';
+      return `<div class="pay-record">
+        <div class="pay-record-left">
+          <span class="pay-record-month">${fmtMonth(pay.monthStr)}</span>
+          <span class="pay-record-date">📅 ${dateStr}</span>
+          <span style="font-size:12px;color:var(--text2)">${pay.points}pt</span>
+        </div>
+        <div class="pay-record-right">
+          <span class="pay-amount">¥${pay.amount.toLocaleString()}</span>
+          <button class="rm-btn" onclick="undoPay('${pay.monthStr}')" title="取り消し">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function renderSetRoutines(){
+  const el=document.getElementById('set-routines');el.innerHTML='';
+  S.routines.forEach((r,i)=>{
+    const row=document.createElement('div');row.className='set-row';
+    row.innerHTML=`<select style="width:38px;font-size:18px;padding:4px 2px" onchange="S.routines[${i}].emoji=this.value;save()">${EMOJIS.map(e=>`<option${e===r.emoji?' selected':''}>${e}</option>`).join('')}</select>
+      <input type="text" value="${r.name}" placeholder="項目名" oninput="S.routines[${i}].name=this.value;save()" style="flex:1;min-width:80px">
+      <input type="number" value="${r.points}" min="1" max="99" style="width:50px" oninput="S.routines[${i}].points=parseInt(this.value)||1;save()">
+      <span style="font-size:12px;color:var(--text2)">pt</span>
+      <button class="rm-btn" onclick="rmRoutine(${i})">✕</button>`;
+    el.appendChild(row);
+  });
+}
+function renderSetBonus(){
+  const el=document.getElementById('set-bonus');el.innerHTML='';
+  S.bonusRules.forEach((rule,i)=>{
+    const row=document.createElement('div');row.className='bonus-rule-row';
+    const opts=S.routines.map(r=>`<option value="${r.id}"${r.id===rule.routineId?' selected':''}>${r.emoji} ${r.name}</option>`).join('');
+    row.innerHTML=`<select style="flex:1;min-width:80px;font-size:13px;padding:6px 8px" onchange="S.bonusRules[${i}].routineId=parseInt(this.value);save()">${opts}</select>
+      <span style="font-size:12px;color:var(--text2);white-space:nowrap">連続</span>
+      <input type="number" value="${rule.streakDays}" min="1" max="99" style="width:50px" oninput="S.bonusRules[${i}].streakDays=parseInt(this.value)||1;save()">
+      <span style="font-size:12px;color:var(--text2);white-space:nowrap">日で</span>
+      <input type="number" value="${rule.bonusPoints}" min="1" max="999" style="width:50px" oninput="S.bonusRules[${i}].bonusPoints=parseInt(this.value)||1;save()">
+      <span style="font-size:12px;color:var(--text2)">pt</span>
+      <button class="rm-btn" onclick="rmBonus(${i})">✕</button>`;
+    el.appendChild(row);
+  });
+}
+function renderSetSalary(){
+  const el=document.getElementById('set-salary');el.innerHTML='';
+  [...S.salaryTiers].sort((a,b)=>a.from-b.from).forEach((t,i)=>{
+    const row=document.createElement('div');row.className='salary-row';
+    row.innerHTML=`<span style="font-size:13px;color:var(--text2);white-space:nowrap">${t.from}〜${t.to} pt</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="number" value="${t.amount}" style="width:80px" oninput="S.salaryTiers[${i}].amount=parseInt(this.value)||0;save()">
+        <span style="font-size:12px;color:var(--text2)">円</span>
+        <button class="rm-btn" onclick="rmTier(${i})">✕</button>
+      </div>`;
+    el.appendChild(row);
+  });
+}
+
+function addRoutine(){S.routines.push({id:S.nextId++,name:'',points:1,emoji:EMOJIS[S.routines.length%EMOJIS.length]});save();renderSetRoutines();}
+function rmRoutine(i){S.routines.splice(i,1);save();renderAll();}
+function addBonusRule(){const fr=S.routines[0];S.bonusRules.push({id:S.nextBonusId++,routineId:fr?fr.id:1,streakDays:10,bonusPoints:10});save();renderSetBonus();}
+function rmBonus(i){S.bonusRules.splice(i,1);save();renderSetBonus();}
+function addTier(){
+  const f=parseInt(document.getElementById('nf').value),t=parseInt(document.getElementById('nt').value),a=parseInt(document.getElementById('na').value);
+  if(isNaN(f)||isNaN(t)||isNaN(a))return;
+  S.salaryTiers.push({from:f,to:t,amount:a});save();renderSetSalary();
+  ['nf','nt','na'].forEach(id=>document.getElementById(id).value='');
+}
+function rmTier(i){S.salaryTiers.splice(i,1);save();renderSetSalary();}
+function prevMonth(){histDate.setMonth(histDate.getMonth()-1);renderHistory();}
+function nextMonth(){histDate.setMonth(histDate.getMonth()+1);renderHistory();}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['today','history','payment','settings'][i]===name));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='routine-backup.json';a.click();
+}
+function importData(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{try{S=JSON.parse(ev.target.result);save();renderAll();toast('データを読み込みました');}catch(e){toast('読み込みに失敗しました');}};
+    reader.readAsText(e.target.files[0]);
+  };inp.click();
+}
+function renderManualEntry(){
+  const ds=document.getElementById('manual-date').value;
+  const el=document.getElementById('manual-entry-list');
+  if(!ds){el.innerHTML='';return;}
+  el.innerHTML='';
+  S.routines.forEach((r,i)=>{
+    const done=doneOn(r.id,ds);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid '+(done?'var(--green-border)':'var(--border)')+';background:'+(done?'var(--green-bg)':'var(--bg)')+';margin-bottom:8px;cursor:pointer;-webkit-tap-highlight-color:transparent';
+    row.innerHTML=`<span style="font-size:20px">${r.emoji}</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:${done?'var(--green-text)':'var(--text)'}">${r.name}</div>
+        <div style="font-size:12px;color:${done?'var(--green-text)':'var(--text2)'}">⭐ ${r.points}pt</div>
+      </div>
+      <div style="width:28px;height:28px;border-radius:50%;border:1.5px solid ${done?'var(--green-border)':'var(--border2)'};background:${done?'var(--green-bg)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:15px;color:${done?'var(--green-text)':'var(--text3)'}">${done?'✓':'○'}</div>`;
+    row.onclick=()=>toggleManual(r.id,ds);
+    el.appendChild(row);
+  });
+  // その日の合計表示
+  const pts=S.logs.filter(l=>l.date===ds).reduce((a,l)=>a+l.points,0);
+  if(pts>0){
+    const sum=document.createElement('div');
+    sum.style.cssText='text-align:right;font-size:13px;color:var(--green-text);font-weight:600;margin-top:4px';
+    sum.textContent='この日の合計: '+pts+' pt';
+    el.appendChild(sum);
+  }
+}
+
+function toggleManual(rid,ds){
+  const r=S.routines.find(x=>x.id===rid);if(!r)return;
+  const idx=S.logs.findIndex(l=>l.routineId===rid&&l.date===ds);
+  if(idx>=0){
+    S.logs.splice(idx,1);
+    toast(`${r.emoji} ${r.name} ${ds} を取り消しました`);
+  } else {
+    S.logs.push({id:Date.now(),routineId:rid,date:ds,points:r.points,name:r.name,emoji:r.emoji});
+    toast(`${r.emoji} ${r.name} ${ds} を記録しました`);
+  }
+  save();renderManualEntry();renderHistory();renderPayment();renderSummary();
+}
+
+function renderAll(){renderSummary();renderBonusBanners();renderRoutines();renderHistory();renderPayment();renderSetRoutines();renderSetBonus();renderSetSalary();}
+load();renderAll();
+</script>
+</body>
+</html>
